@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useLogin } from '../hooks/use-login'
-import { saveSession } from '../app/auth-storage'
+import { isAuthenticated, saveSession } from '../app/auth-storage'
 import { getApiErrorMessage } from '../api/admin'
 import { DropletLogo } from '../components/droplet-logo'
 import { CheckIcon } from '../components/icons'
@@ -18,6 +18,8 @@ export function LoginPage() {
   const navigate = useNavigate()
   const loginMutation = useLogin()
 
+  if (isAuthenticated()) return <Navigate to="/dashboard" replace />
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -25,7 +27,7 @@ export function LoginPage() {
     try {
       const session = await loginMutation.mutateAsync({ username, password })
       saveSession(session)
-      navigate('/reporte')
+      navigate('/dashboard')
     } catch (err) {
       setError(getApiErrorMessage(err, 'No se pudo conectar con el servicio. Inténtalo nuevamente.'))
     }
