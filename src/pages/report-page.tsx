@@ -10,7 +10,7 @@ import type { ReportParams } from '../api/admin'
 
 const PAGE_SIZE = 20
 
-const STATUS_OPTIONS = ['Pendiente', 'QRGenerado', 'Pagado', 'CospailRegistrado', 'Anulado']
+const STATUS_OPTIONS = ['Pendiente', 'QRGenerado', 'Pagado', 'PagoRegistrado', 'Anulado']
 
 interface DraftFilters {
   from: string
@@ -33,7 +33,7 @@ function defaultFilters(): DraftFilters {
   return {
     from: today,
     to: today,
-    status: 'CospailRegistrado',
+    status: 'PagoRegistrado',
     fixedCode: '',
     documentId: '',
   }

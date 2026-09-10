@@ -6,7 +6,7 @@ const STATUS_STYLES: Record<string, string> = {
   Pendiente: 'border-cospail-navy/20 bg-cospail-surface text-cospail-ink',
   QRGenerado: 'border-cospail-sky/60 bg-cospail-sky-tint text-cospail-navy-dark',
   Pagado: 'border-amber-300 bg-amber-50 text-amber-700',
-  CospailRegistrado: 'border-cospail-green/40 bg-cospail-green-tint text-cospail-green-dark',
+  PagoRegistrado: 'border-cospail-green/40 bg-cospail-green-tint text-cospail-green-dark',
   Anulado: 'border-red-200 bg-red-50 text-red-700',
 }
 
