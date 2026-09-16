@@ -2,11 +2,9 @@ const TOKEN_KEY = 'cospail-admin-token'
 const DISPLAY_NAME_KEY = 'cospail-admin-display-name'
 const EXPIRES_AT_KEY = 'cospail-admin-expires-at'
 
-export interface Session {
-  token: string
-  displayName: string
-  expiresAt: string
-}
+import type { LoginResponse } from '../types/login-response'
+
+export type Session = LoginResponse
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)

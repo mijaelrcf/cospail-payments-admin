@@ -3,31 +3,42 @@ import type { FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useLogin } from '../hooks/use-login'
 import { isAuthenticated, saveSession } from '../app/auth-storage'
-import { getApiErrorMessage } from '../api/admin'
+import { getApiErrorMessage } from '../lib/errors'
+import { ROUTES } from '../lib/routes'
 import { DropletLogo } from '../components/droplet-logo'
-import { CheckIcon } from '../components/icons'
+import { CheckIcon, EyeIcon, EyeOffIcon } from '../components/icons'
+import { Button } from '../components/ui/Button'
+import { TextField } from '../components/ui/Field'
+import { InlineError } from '../components/ui/Feedback'
 
-const inputClasses =
-  'w-full rounded-xl border border-cospail-navy/20 bg-white px-4 py-3 text-sm text-cospail-ink shadow-sm outline-none transition placeholder:text-cospail-ink/35 focus:border-cospail-sky focus:ring-4 focus:ring-cospail-sky/20'
+const FEATURES = [
+  'Reporte de pagos en tiempo real',
+  'Detalle de deudas por pago',
+  'Conciliación con notificación QR',
+]
 
 export function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const navigate = useNavigate()
   const loginMutation = useLogin()
 
-  if (isAuthenticated()) return <Navigate to="/dashboard" replace />
+  if (isAuthenticated()) return <Navigate to={ROUTES.panel} replace />
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
 
     try {
-      const session = await loginMutation.mutateAsync({ username, password })
+      const session = await loginMutation.mutateAsync({
+        username: username.trim(),
+        password,
+      })
       saveSession(session)
-      navigate('/dashboard')
+      navigate(ROUTES.panel)
     } catch (err) {
       setError(getApiErrorMessage(err, 'No se pudo conectar con el servicio. Inténtalo nuevamente.'))
     }
@@ -70,16 +81,14 @@ export function LoginPage() {
                   Gestiona y concilia los pagos recibidos a través de la banca móvil.
                 </p>
                 <ul className="space-y-2.5 pt-2">
-                  {['Reporte de pagos en tiempo real', 'Detalle de deudas por pago', 'Conciliación con notificación QR'].map(
-                    (item) => (
-                      <li key={item} className="flex items-center gap-2.5 text-sm text-white/80">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cospail-green/90 text-white">
-                          <CheckIcon className="h-3 w-3" strokeWidth={3} />
-                        </span>
-                        {item}
-                      </li>
-                    )
-                  )}
+                  {FEATURES.map((item) => (
+                    <li key={item} className="flex items-center gap-2.5 text-sm text-white/80">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cospail-green/90 text-white">
+                        <CheckIcon className="h-3 w-3" strokeWidth={3} />
+                      </span>
+                      {item}
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -100,12 +109,12 @@ export function LoginPage() {
                   <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-cospail-ink">
                     Usuario
                   </label>
-                  <input
+                  <TextField
                     id="username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className={inputClasses}
+                    className="rounded-xl px-4 py-3"
                     placeholder="Tu usuario"
                     required
                     autoComplete="username"
@@ -116,31 +125,42 @@ export function LoginPage() {
                   <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-cospail-ink">
                     Contraseña
                   </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={inputClasses}
-                    placeholder="••••••••"
-                    required
-                    autoComplete="current-password"
-                  />
+                  <div className="relative">
+                    <TextField
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="rounded-xl px-4 py-3 pr-12"
+                      placeholder="••••••••"
+                      required
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      aria-pressed={showPassword}
+                      className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-cospail-ink/40 transition hover:text-cospail-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cospail-sky/30"
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                {error && (
-                  <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {error}
-                  </p>
-                )}
+                {error && <InlineError message={error} />}
 
-                <button
+                <Button
                   type="submit"
                   disabled={loginMutation.isPending}
-                  className="w-full rounded-xl bg-cospail-navy px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cospail-navy-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cospail-sky/40 disabled:opacity-50"
+                  className="w-full rounded-xl px-4 py-3"
                 >
                   {loginMutation.isPending ? 'Ingresando…' : 'Ingresar'}
-                </button>
+                </Button>
               </form>
             </div>
           </div>

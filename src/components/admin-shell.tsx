@@ -3,8 +3,10 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { DropletLogo } from './droplet-logo'
 import { LogoutIcon } from './icons'
 import { clearSession, getDisplayName } from '../app/auth-storage'
+import { queryClient } from '../app/query-client'
+import { ROUTES } from '../lib/routes'
 
-interface Props {
+interface AdminShellProps {
   children: ReactNode
 }
 
@@ -13,13 +15,15 @@ const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
   }`
 
-export function AdminShell({ children }: Props) {
+export function AdminShell({ children }: AdminShellProps) {
   const navigate = useNavigate()
   const displayName = getDisplayName()
+  const displayInitial = displayName?.trim().charAt(0).toUpperCase() ?? ''
 
   const handleLogout = () => {
     clearSession()
-    navigate('/')
+    void queryClient.clear()
+    navigate(ROUTES.login)
   }
 
   return (
@@ -41,11 +45,11 @@ export function AdminShell({ children }: Props) {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <nav className="mr-1 hidden items-center gap-1 sm:flex">
-              <NavLink to="/dashboard" className={navLinkClasses}>
-                Dashboard
+            <nav aria-label="Navegación principal" className="mr-1 hidden items-center gap-1 sm:flex">
+              <NavLink to={ROUTES.panel} className={navLinkClasses}>
+                Panel
               </NavLink>
-              <NavLink to="/reporte" className={navLinkClasses}>
+              <NavLink to={ROUTES.reporte} className={navLinkClasses}>
                 Reporte
               </NavLink>
             </nav>
@@ -54,7 +58,7 @@ export function AdminShell({ children }: Props) {
                 <span aria-hidden="true" className="hidden h-6 w-px bg-white/15 md:block" />
                 <span className="hidden items-center gap-2.5 rounded-xl bg-white/10 py-1.5 pl-1.5 pr-3 ring-1 ring-white/15 md:flex">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cospail-sky/25 text-xs font-bold text-white">
-                    {displayName.charAt(0).toUpperCase()}
+                    {displayInitial}
                   </span>
                   <span className="leading-tight">
                     <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-cospail-sky">
@@ -77,11 +81,11 @@ export function AdminShell({ children }: Props) {
             </button>
           </div>
         </div>
-        <nav className="mx-auto flex w-full max-w-6xl items-center gap-1 px-6 pb-3 sm:hidden sm:px-8">
-          <NavLink to="/dashboard" className={navLinkClasses}>
-            Dashboard
+        <nav aria-label="Navegación principal móvil" className="mx-auto flex w-full max-w-6xl items-center gap-1 px-6 pb-3 sm:hidden sm:px-8">
+          <NavLink to={ROUTES.panel} className={navLinkClasses}>
+            Panel
           </NavLink>
-          <NavLink to="/reporte" className={navLinkClasses}>
+          <NavLink to={ROUTES.reporte} className={navLinkClasses}>
             Reporte
           </NavLink>
         </nav>

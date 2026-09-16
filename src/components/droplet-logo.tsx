@@ -1,8 +1,8 @@
-interface Props {
+interface DropletLogoProps {
   className?: string
 }
 
-export function DropletLogo({ className }: Props) {
+export function DropletLogo({ className }: DropletLogoProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <defs>

@@ -1,4 +1,5 @@
 import type { Debt } from './debt'
+import type { PaymentStatus } from './payment-status'
 
 export interface PaymentItem {
   pagoCospailId: string
@@ -6,8 +7,7 @@ export interface PaymentItem {
   documentId: string
   memberName?: string | null
   totalAmount: number
-  status: string
+  status: PaymentStatus
   createdAtUtc: string
-  updatedAtUtc?: string | null
   debts: Debt[]
 }

@@ -1,11 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { XIcon } from './icons'
 import { StatusBadge } from './status-badge'
+import { Button } from './ui/Button'
 import { usePaymentDetail } from '../hooks/use-payment-detail'
-import { getApiErrorMessage } from '../api/admin'
-import { formatAmount, formatDateTime, formatQrDateTime } from '../app/formatters'
+import { getApiErrorMessage } from '../lib/errors'
+import { formatAmount, formatDateTime, formatQrDateTime } from '../lib/formatters'
 
-interface Props {
+interface PaymentDetailModalProps {
   open: boolean
   pagoCospailId: string | null
   onClose: () => void
@@ -24,31 +25,63 @@ function FieldValue({ label, value }: { label: string; value: string | number | 
   )
 }
 
-export function PaymentDetailModal({ open, pagoCospailId, onClose }: Props) {
+export function PaymentDetailModal({ open, pagoCospailId, onClose }: PaymentDetailModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const { data, isPending, isError, error, refetch } = usePaymentDetail(pagoCospailId)
+  const titleId = useId()
+  const { data, isPending, isError, error, refetch } = usePaymentDetail(pagoCospailId, {
+    enabled: open,
+  })
 
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
-    if (open) {
+    if (open && !dialog.open) {
       dialog.showModal()
-    } else {
+    } else if (!open && dialog.open) {
       dialog.close()
     }
+    return () => {
+      if (dialog.open) dialog.close()
+    }
   }, [open])
+
+  const qrFields = data?.qrNotification
+    ? [
+        { label: 'QR', value: data.qrNotification.qrId },
+        { label: 'Transacción', value: data.qrNotification.transactionId },
+        { label: 'Monto', value: formatAmount(data.qrNotification.amount) },
+        { label: 'Moneda', value: data.qrNotification.currency },
+        {
+          label: 'Fecha / hora de pago',
+          value: formatQrDateTime(data.qrNotification.paymentDate, data.qrNotification.paymentTime),
+        },
+        { label: 'Acreditado', value: formatDateTime(data.qrNotification.paymentAtUtc) },
+        { label: 'Banco emisor', value: data.qrNotification.senderBankCode },
+        { label: 'Ordenante', value: data.qrNotification.senderName },
+        { label: 'Documento ordenante', value: data.qrNotification.senderDocumentId },
+        { label: 'Cuenta ordenante', value: data.qrNotification.senderAccount },
+        { label: 'Sucursal', value: data.qrNotification.branchCode },
+        { label: 'Conciliado', value: formatDateTime(data.qrNotification.receivedAtUtc) },
+        { label: 'Descripción', value: data.qrNotification.description },
+      ]
+    : []
 
   return (
     <dialog
       ref={dialogRef}
       onClose={onClose}
-      className="m-auto w-full max-w-2xl rounded-2xl bg-white p-0 shadow-xl ring-1 ring-cospail-navy/10 backdrop:bg-cospail-ink/40 backdrop:backdrop-blur-sm sm:p-6"
+      aria-labelledby={titleId}
+      className="m-auto w-full max-w-2xl rounded-2xl bg-white p-0 shadow-xl ring-1 ring-cospail-navy/10 backdrop:bg-cospail-ink/40 backdrop-blur-sm sm:p-6"
     >
-      <form method="dialog">
+      <div>
         <div className="mb-4 flex items-center justify-between px-6 pt-6 sm:px-0 sm:pt-0">
-          <h2 className="font-display text-lg font-bold text-cospail-ink">Detalle del pago</h2>
+          <h2 id={titleId} className="font-display text-lg font-bold text-cospail-ink">
+            Detalle del pago
+          </h2>
           <button
-            type="submit"
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar detalle del pago"
             className="flex h-8 w-8 items-center justify-center rounded-full text-cospail-ink/40 transition hover:bg-cospail-surface hover:text-cospail-ink"
           >
             <XIcon className="h-5 w-5" />
@@ -57,21 +90,19 @@ export function PaymentDetailModal({ open, pagoCospailId, onClose }: Props) {
 
         <div className="max-h-[70vh] overflow-y-auto px-6 pb-6 sm:px-0 sm:pb-0">
           {isPending && (
-            <p className="py-16 text-center text-sm text-cospail-ink/50">Cargando detalle…</p>
+            <p role="status" aria-live="polite" className="py-16 text-center text-sm text-cospail-ink/50">
+              Cargando detalle…
+            </p>
           )}
 
           {isError && (
             <div className="py-16 text-center">
-              <p className="text-sm text-red-700">
+              <p role="alert" className="text-sm text-red-700">
                 {getApiErrorMessage(error, 'No se pudo cargar el detalle del pago.')}
               </p>
-              <button
-                type="button"
-                onClick={() => refetch()}
-                className="mt-3 rounded-lg bg-cospail-navy px-4 py-2 text-sm font-semibold text-white transition hover:bg-cospail-navy-dark"
-              >
+              <Button type="button" onClick={() => refetch()} className="mt-3">
                 Reintentar
-              </button>
+              </Button>
             </div>
           )}
 
@@ -109,12 +140,12 @@ export function PaymentDetailModal({ open, pagoCospailId, onClose }: Props) {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-cospail-navy/10 bg-cospail-surface/70 text-xs font-semibold uppercase tracking-wide text-cospail-ink/60">
-                      <th className="px-3 py-2">Período</th>
-                      <th className="px-3 py-2">Nota</th>
-                      <th className="px-3 py-2">Crédito</th>
-                      <th className="px-3 py-2">Tipo</th>
-                      <th className="px-3 py-2 text-right">Monto</th>
-                      <th className="px-3 py-2">Estado</th>
+                      <th scope="col" className="px-3 py-2">Período</th>
+                      <th scope="col" className="px-3 py-2">Nota</th>
+                      <th scope="col" className="px-3 py-2">Crédito</th>
+                      <th scope="col" className="px-3 py-2">Tipo</th>
+                      <th scope="col" className="px-3 py-2 text-right">Monto</th>
+                      <th scope="col" className="px-3 py-2">Estado</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -156,22 +187,9 @@ export function PaymentDetailModal({ open, pagoCospailId, onClose }: Props) {
               {data.qrNotification ? (
                 <div className="rounded-2xl border border-cospail-green/30 bg-cospail-green-tint/60 p-4">
                   <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-                    <FieldValue label="QR" value={data.qrNotification.qrId} />
-                    <FieldValue label="Transacción" value={data.qrNotification.transactionId} />
-                    <FieldValue label="Monto" value={formatAmount(data.qrNotification.amount)} />
-                    <FieldValue label="Moneda" value={data.qrNotification.currency} />
-                    <FieldValue
-                      label="Fecha / hora de pago"
-                      value={formatQrDateTime(data.qrNotification.paymentDate, data.qrNotification.paymentTime)}
-                    />
-                    <FieldValue label="Acreditado" value={formatDateTime(data.qrNotification.paymentAtUtc)} />
-                    <FieldValue label="Banco emisor" value={data.qrNotification.senderBankCode} />
-                    <FieldValue label="Ordenante" value={data.qrNotification.senderName} />
-                    <FieldValue label="Documento ordenante" value={data.qrNotification.senderDocumentId} />
-                    <FieldValue label="Cuenta ordenante" value={data.qrNotification.senderAccount} />
-                    <FieldValue label="Sucursal" value={data.qrNotification.branchCode} />
-                    <FieldValue label="Conciliado" value={formatDateTime(data.qrNotification.receivedAtUtc)} />
-                    <FieldValue label="Descripción" value={data.qrNotification.description} />
+                    {qrFields.map((field) => (
+                      <FieldValue key={field.label} label={field.label} value={field.value} />
+                    ))}
                   </dl>
                 </div>
               ) : (
@@ -182,7 +200,7 @@ export function PaymentDetailModal({ open, pagoCospailId, onClose }: Props) {
             </>
           )}
         </div>
-      </form>
+      </div>
     </dialog>
   )
 }
